@@ -2,7 +2,7 @@ const express  = require('express');
 const app  = express();
 require('dotenv').config()
 const cors  = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port  = process.env.PORT || 5000;
 
 // middleware
@@ -31,9 +31,18 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
+    const usersCollection = client.db("bistroDB").collection("users");
     const menuCollection = client.db("bistroDB").collection("menu");
     const reviewCollection = client.db("bistroDB").collection("reviews");
     const cartCollection = client.db("bistroDB").collection("carts");
+
+    // users related apis
+    app.post('/users', async(req,res) =>{
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    })
+
 
     // menu total data
     app.get('/menu', async(req, res) => {
