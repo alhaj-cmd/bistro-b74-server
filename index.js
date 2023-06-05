@@ -184,7 +184,7 @@ async function run() {
     // create payment intent
     app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
       const {price} = req.body;
-      const amount = price*100;
+      const amount = parseInt(price*100);
       console.log(price, amount);
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount, 
@@ -228,6 +228,39 @@ async function run() {
       })
 
     })
+
+    app.get('/order-stats', verifyJWT, verifyAdmin, async(req, res) =>{
+      const pipeline =[
+        {
+          $lookup:{
+            from:'menu',
+            localField:'menuItems',
+            foreignField:'_id',
+            as:'menuItemsData'
+          }
+        },
+        {
+          $unwind:'$menuItemsData'
+        },
+       { $group:{
+          _id:'$menuItemsData.category',
+          count:{$sum:1},
+          total:{$sum: '$menuItemsData.price'}
+        }
+      },
+      {
+        $project:{
+          category:'$_id',
+          count:1,
+          total:{$round:['$total',2]},
+          _id:0
+
+        }
+      }
+      ];
+      const result = await paymentCollection.aggregate(pipeline).toArray();
+      res.send(result);
+    } )
 
 
 
